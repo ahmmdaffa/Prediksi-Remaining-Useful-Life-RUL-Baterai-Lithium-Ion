@@ -1,0 +1,2 @@
+MAE,RMSE,R2,Best_Params
+6.110559136757186,24.56440087669912,0.9569944006976177,"{'knn__metric': 'manhattan', 'knn__n_neighbors': 3, 'knn__weights': 'distance'}"

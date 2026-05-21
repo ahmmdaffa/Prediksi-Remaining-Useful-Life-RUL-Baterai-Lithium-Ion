@@ -1,0 +1,6 @@
+TAHAP 3 - ANALISIS PREPROCESSING
+================================================================================
+
+Preprocessing dilakukan untuk mengubah data sensor mentah menjadi data yang sesuai untuk pemodelan regresi. Karena satu siklus memiliki banyak baris pengukuran, data diagregasi ke level siklus menggunakan statistik rata-rata, standar deviasi, nilai minimum, dan nilai maksimum. Strategi ini membuat setiap baris merepresentasikan kondisi baterai pada satu siklus tertentu.
+
+Dataset tidak memiliki kolom RUL eksplisit, sehingga target RUL_Cycles dibentuk berdasarkan sisa siklus menuju End-of-Life. End-of-Life didefinisikan ketika kapasitas baterai mencapai 80% dari kapasitas awal masing-masing baterai. Missing values ditangani dengan imputasi median. Feature scaling menggunakan StandardScaler dilakukan karena KNN menghitung kedekatan data berdasarkan jarak, sehingga fitur dengan skala besar dapat mendominasi hasil prediksi jika tidak distandarkan.

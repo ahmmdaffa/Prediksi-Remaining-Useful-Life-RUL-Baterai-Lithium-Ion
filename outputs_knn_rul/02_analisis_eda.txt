@@ -1,0 +1,6 @@
+TAHAP 2 - ANALISIS EXPLORATORY DATA ANALYSIS (EDA)
+================================================================================
+
+EDA dilakukan untuk memahami karakteristik awal data baterai sebelum model dibangun. Data sensor mentah diagregasi ke level siklus agar tren degradasi dapat diamati dengan lebih jelas. Visualisasi kapasitas terhadap Cycle_Number digunakan untuk melihat apakah kapasitas baterai menurun seiring bertambahnya siklus pemakaian. Pola penurunan tersebut merupakan ciri umum degradasi baterai lithium-ion akibat proses charging-discharging berulang.
+
+Selain itu, visualisasi SOH menunjukkan persentase kesehatan baterai dibandingkan kapasitas awal. Garis 80% digunakan sebagai batas umum End-of-Life (EOL). Heatmap korelasi digunakan untuk memeriksa hubungan antara fitur sensor, kapasitas, dan siklus. Korelasi ini membantu mengidentifikasi fitur yang berpotensi relevan terhadap prediksi Remaining Useful Life (RUL).

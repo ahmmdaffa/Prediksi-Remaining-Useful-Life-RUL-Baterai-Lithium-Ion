@@ -1,0 +1,38 @@
+TAHAP 1 - PENGAMBILAN DATA & INSPEKSI AWAL
+================================================================================
+
+Ukuran dataset: 830,026 baris dan 7 kolom
+
+Daftar kolom:
+['Battery_ID', 'Cycle_Number', 'Time_Seconds', 'Voltage_V', 'Current_A', 'Temperature_C', 'Capacity_Ah']
+
+Lima baris pertama:
+  Battery_ID  Cycle_Number  Time_Seconds  Voltage_V  Current_A  Temperature_C  Capacity_Ah
+0      B0005             2         0.000   4.191492  -0.004902      24.330034     1.856487
+1      B0005             2        16.781   4.190749  -0.001478      24.325993     1.856487
+2      B0005             2        35.703   3.974871  -2.012528      24.389085     1.856487
+3      B0005             2        53.781   3.951717  -2.013979      24.544752     1.856487
+4      B0005             2        71.922   3.934352  -2.011144      24.731385     1.856487
+
+Jumlah missing values per kolom:
+Battery_ID       0
+Cycle_Number     0
+Time_Seconds     0
+Voltage_V        0
+Current_A        0
+Temperature_C    0
+Capacity_Ah      0
+
+Statistik deskriptif fitur numerik:
+        Cycle_Number   Time_Seconds      Voltage_V      Current_A  Temperature_C    Capacity_Ah
+count  830026.000000  830026.000000  830026.000000  830026.000000  830026.000000  830026.000000
+mean      147.903933    1988.079159       3.441791      -1.546295      27.833394       1.459198
+std       142.058054    1473.932959       0.329012       1.208903      13.548113       0.370423
+min         1.000000       0.000000       0.192738      -4.038796       2.904756       0.000000
+25%        43.000000     829.016000       3.289096      -2.010688      12.660427       1.292408
+50%        93.000000    1715.938000       3.472042      -1.988791      30.387710       1.525268
+75%       222.000000    2746.687000       3.666805      -0.993895      36.029697       1.759836
+max       614.000000    6574.671000       4.542427       0.030461      69.869746       2.640149
+
+Analisis Hasil:
+Dataset berhasil dimuat menggunakan pandas. Dataset berisi data sensor baterai lithium-ion, yaitu Battery_ID, Cycle_Number, Time_Seconds, Voltage_V, Current_A, Temperature_C, dan Capacity_Ah. Inspeksi awal dilakukan untuk memahami ukuran data, tipe data, nilai hilang, serta rentang nilai numerik. Tahap ini penting karena kualitas data awal akan memengaruhi validitas proses EDA, preprocessing, pemodelan, dan evaluasi model prediksi Remaining Useful Life (RUL).

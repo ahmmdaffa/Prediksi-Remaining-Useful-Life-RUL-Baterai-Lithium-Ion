@@ -1,0 +1,6 @@
+TAHAP 5 - ANALISIS EVALUASI MODEL
+================================================================================
+
+Evaluasi model dilakukan menggunakan tiga metrik regresi, yaitu Mean Absolute Error (MAE), Root Mean Squared Error (RMSE), dan R-squared. Hasil evaluasi menunjukkan MAE sebesar 6.1106, RMSE sebesar 24.5644, dan R-squared sebesar 0.9570. MAE menunjukkan rata-rata kesalahan absolut prediksi RUL, sedangkan RMSE memberikan penalti lebih besar terhadap kesalahan yang ekstrem. R-squared menunjukkan proporsi variasi target RUL yang dapat dijelaskan oleh model.
+
+Plot aktual vs prediksi digunakan untuk menilai kedekatan hasil prediksi dengan nilai sebenarnya. Apabila titik-titik data berada dekat dengan garis diagonal, maka model memiliki kemampuan prediksi yang baik. Plot residual digunakan untuk memeriksa pola kesalahan. Residual yang tersebar secara acak di sekitar nol menunjukkan bahwa model tidak meninggalkan pola kesalahan sistematis yang kuat.

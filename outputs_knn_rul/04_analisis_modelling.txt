@@ -1,0 +1,6 @@
+TAHAP 4 - ANALISIS MODELLING KNN
+================================================================================
+
+Model yang digunakan adalah K-Nearest Neighbors Regressor. KNN merupakan algoritma berbasis instance yang memprediksi nilai kontinu berdasarkan kedekatan suatu data terhadap sejumlah tetangga terdekatnya. Pada penelitian ini, data dibagi menjadi data latih dan data uji dengan rasio 80:20. Pipeline terdiri dari imputasi median, StandardScaler, dan KNN Regressor.
+
+GridSearchCV digunakan untuk mencari kombinasi parameter terbaik, meliputi jumlah tetangga, jenis pembobotan, dan metrik jarak. Parameter terbaik yang diperoleh adalah {'knn__metric': 'manhattan', 'knn__n_neighbors': 3, 'knn__weights': 'distance'}. Skor cross-validation terbaik berdasarkan RMSE adalah 14.2302. Penggunaan pipeline membantu mencegah data leakage karena scaler hanya dipelajari dari data latih pada setiap proses validasi.
