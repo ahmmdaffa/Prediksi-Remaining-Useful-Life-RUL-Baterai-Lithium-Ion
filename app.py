@@ -59,6 +59,54 @@ CUSTOM_CSS = """
         border-radius: 0;
     }
 
+    [data-testid="stSidebar"] .stButton > button {
+        background: #f4f7ee;
+        color: #161914;
+        border: 1px solid #cdd8c7;
+        border-radius: 6px;
+        font-weight: 750;
+        min-height: 2.35rem;
+    }
+
+    [data-testid="stSidebar"] .stButton > button:hover {
+        background: #dce8d4;
+        color: #161914;
+        border-color: #dce8d4;
+    }
+
+    .sidebar-filter-card {
+        border-top: 1px solid #3a4435;
+        border-bottom: 1px solid #3a4435;
+        padding: 0.85rem 0 0.7rem 0;
+        margin: 0.6rem 0 0.75rem 0;
+    }
+
+    .sidebar-filter-title {
+        color: #f4f7ee;
+        font-size: 0.88rem;
+        font-weight: 850;
+        letter-spacing: 0.03em;
+        margin-bottom: 0.15rem;
+    }
+
+    .sidebar-filter-help {
+        color: #bcc8b7;
+        font-size: 0.78rem;
+        line-height: 1.45;
+        margin-bottom: 0.65rem;
+    }
+
+    .sidebar-count {
+        background: #253027;
+        border: 1px solid #3f4d40;
+        color: #edf4ea;
+        padding: 0.45rem 0.55rem;
+        margin-top: 0.45rem;
+        border-radius: 6px;
+        font-size: 0.82rem;
+        font-weight: 700;
+    }
+
     .main .block-container {
         padding-top: 2rem;
         padding-bottom: 3rem;
@@ -371,6 +419,43 @@ def make_corr_plot(cycle_df: pd.DataFrame):
     return fig
 
 
+def make_degradation_summary(plot_df: pd.DataFrame) -> pd.DataFrame:
+    summary = (
+        plot_df.sort_values(["Battery_ID", "Cycle_Number"])
+        .groupby("Battery_ID")
+        .agg(
+            Cycle_Awal=("Cycle_Number", "min"),
+            Cycle_Akhir=("Cycle_Number", "max"),
+            Kapasitas_Awal_Ah=("Capacity_Ah", "first"),
+            Kapasitas_Akhir_Ah=("Capacity_Ah", "last"),
+            SOH_Minimum=("SOH_Percent", "min"),
+            EOL_Cycle=("EOL_Cycle", "first"),
+            RUL_Terakhir=("RUL_Cycles", "last"),
+        )
+        .reset_index()
+    )
+    summary["Penurunan_Ah"] = summary["Kapasitas_Awal_Ah"] - summary["Kapasitas_Akhir_Ah"]
+    summary["Penurunan_Persen"] = summary["Penurunan_Ah"] / summary["Kapasitas_Awal_Ah"] * 100
+    return summary.sort_values("Penurunan_Persen", ascending=False)
+
+
+def make_rul_correlation_summary(cycle_df: pd.DataFrame) -> pd.DataFrame:
+    corr = cycle_df.select_dtypes(include="number").corr(numeric_only=True)["RUL_Cycles"]
+    corr = corr.drop(labels=["RUL_Cycles"], errors="ignore").dropna()
+    summary = (
+        corr.reindex(corr.abs().sort_values(ascending=False).index)
+        .head(8)
+        .reset_index()
+        .rename(columns={"index": "Fitur", "RUL_Cycles": "Korelasi_dengan_RUL"})
+    )
+    summary["Arah Hubungan"] = np.where(
+        summary["Korelasi_dengan_RUL"] >= 0,
+        "searah dengan RUL",
+        "berlawanan dengan RUL",
+    )
+    return summary
+
+
 def make_actual_pred_plot(y_test: pd.Series, y_pred: np.ndarray):
     fig, ax = plt.subplots(figsize=(7, 7))
     sns.scatterplot(x=y_test, y=y_pred, alpha=0.72, color="#0f8f7d", edgecolor="#ffffff", linewidth=0.4, ax=ax)
@@ -393,6 +478,62 @@ def make_residual_plot(y_pred: np.ndarray, residual: np.ndarray):
     ax.set_ylabel("Residual")
     fig.tight_layout()
     return fig
+
+
+def render_battery_selector(battery_options: list[str]) -> list[str]:
+    for battery_id in battery_options:
+        st.session_state.setdefault(f"battery_pick_{battery_id}", True)
+
+    st.markdown(
+        """
+        <div class="sidebar-filter-card">
+            <div class="sidebar-filter-title">Filter Battery ID</div>
+            <div class="sidebar-filter-help">
+                Gunakan semua baterai untuk gambaran umum, atau pilih manual dengan checkbox agar mudah menambah dan menghapus baterai.
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    mode = st.radio(
+        "Cara memilih",
+        ["Semua baterai", "Pilih manual"],
+        key="battery_filter_mode",
+        label_visibility="collapsed",
+    )
+
+    if mode == "Semua baterai":
+        selected = battery_options
+        st.markdown(
+            f'<div class="sidebar-count">{len(selected)} dari {len(battery_options)} baterai aktif</div>',
+            unsafe_allow_html=True,
+        )
+        return selected
+
+    col_all, col_clear = st.columns(2)
+    if col_all.button("Pilih semua", use_container_width=True):
+        for battery_id in battery_options:
+            st.session_state[f"battery_pick_{battery_id}"] = True
+    if col_clear.button("Kosongkan", use_container_width=True):
+        for battery_id in battery_options:
+            st.session_state[f"battery_pick_{battery_id}"] = False
+
+    selected = []
+    with st.container():
+        for battery_id in battery_options:
+            is_checked = st.checkbox(
+                battery_id,
+                key=f"battery_pick_{battery_id}",
+            )
+            if is_checked:
+                selected.append(battery_id)
+
+    st.markdown(
+        f'<div class="sidebar-count">{len(selected)} dari {len(battery_options)} baterai dipilih</div>',
+        unsafe_allow_html=True,
+    )
+    return selected
 
 
 with st.sidebar:
@@ -433,15 +574,11 @@ X, y = prepare_features(cycle_df)
 battery_options = sorted(cycle_df["Battery_ID"].unique())
 
 with st.sidebar:
-    selected_batteries = st.multiselect(
-        "Battery ID",
-        options=battery_options,
-        default=battery_options,
-    )
+    selected_batteries = render_battery_selector(battery_options)
 
 plot_df = cycle_df[cycle_df["Battery_ID"].isin(selected_batteries)]
 if plot_df.empty:
-    st.warning("Pilih minimal satu Battery ID untuk visualisasi.")
+    st.warning("Belum ada Battery ID yang dipilih. Centang minimal satu baterai atau gunakan tombol Pilih semua.")
     st.stop()
 
 
@@ -522,18 +659,64 @@ elif page == "EDA":
         "Visualisasi degradasi kapasitas, State of Health, dan korelasi fitur untuk memahami perilaku baterai.",
     )
 
+    degradation_summary = make_degradation_summary(plot_df)
+    correlation_summary = make_rul_correlation_summary(cycle_df)
+    worst_row = degradation_summary.iloc[0]
+    top_corr = correlation_summary.iloc[0]
+    batteries_below_eol = int((degradation_summary["SOH_Minimum"] <= eol_ratio * 100).sum())
+    corr_direction = "naik ketika RUL cenderung tinggi" if top_corr["Korelasi_dengan_RUL"] > 0 else "naik ketika RUL cenderung turun"
+
+    c1, c2, c3, c4 = st.columns(4)
+    with c1:
+        metric_card("Degradasi Terbesar", str(worst_row["Battery_ID"]), f"{worst_row['Penurunan_Persen']:.2f}% turun", "#d96f4d")
+    with c2:
+        metric_card("SOH Minimum", f"{degradation_summary['SOH_Minimum'].min():.2f}%", "terendah pada pilihan data", "#b48a22")
+    with c3:
+        metric_card("Di Bawah EOL", f"{batteries_below_eol}", f"batas {eol_ratio:.0%}", "#5f8d3d")
+    with c4:
+        metric_card("Korelasi Kuat", str(top_corr["Fitur"]), f"{top_corr['Korelasi_dengan_RUL']:.3f}", "#0f8f7d")
+
     tab_capacity, tab_soh, tab_corr = st.tabs(["Kapasitas", "SOH", "Korelasi"])
     with tab_capacity:
         st.pyplot(make_capacity_plot(plot_df), clear_figure=True)
+        st.dataframe(
+            degradation_summary[
+                [
+                    "Battery_ID",
+                    "Cycle_Awal",
+                    "Cycle_Akhir",
+                    "Kapasitas_Awal_Ah",
+                    "Kapasitas_Akhir_Ah",
+                    "Penurunan_Ah",
+                    "Penurunan_Persen",
+                    "SOH_Minimum",
+                    "EOL_Cycle",
+                ]
+            ],
+            use_container_width=True,
+        )
     with tab_soh:
         st.pyplot(make_soh_plot(plot_df, eol_ratio), clear_figure=True)
     with tab_corr:
         st.pyplot(make_corr_plot(cycle_df), clear_figure=True)
+        st.dataframe(correlation_summary, use_container_width=True)
 
     analysis_block(
-        "<strong>Analisis:</strong> tren kapasitas terhadap siklus menunjukkan pola degradasi baterai. "
-        "SOH membantu menempatkan kapasitas terhadap kapasitas awal, sedangkan heatmap korelasi memberi gambaran "
-        "fitur mana yang berhubungan dengan kapasitas dan RUL."
+        f"<strong>Pembacaan grafik kapasitas:</strong> baterai <strong>{worst_row['Battery_ID']}</strong> "
+        f"memiliki penurunan kapasitas paling besar pada data yang sedang dipilih, yaitu sekitar "
+        f"<strong>{worst_row['Penurunan_Persen']:.2f}%</strong> dari kapasitas awal "
+        f"({worst_row['Kapasitas_Awal_Ah']:.3f} Ah menjadi {worst_row['Kapasitas_Akhir_Ah']:.3f} Ah). "
+        "Ini menunjukkan bahwa laju degradasi tidak selalu identik antar baterai, meskipun semua baterai "
+        "mengalami pola penurunan akibat siklus pemakaian berulang.<br><br>"
+        f"<strong>Pembacaan grafik SOH:</strong> nilai SOH minimum pada pilihan data adalah "
+        f"<strong>{degradation_summary['SOH_Minimum'].min():.2f}%</strong>. Dengan batas End-of-Life "
+        f"<strong>{eol_ratio:.0%}</strong>, terdapat <strong>{batteries_below_eol}</strong> baterai yang sudah "
+        "menyentuh atau melewati ambang EOL pada data terpilih. Grafik SOH membantu menjelaskan kapan kapasitas "
+        "baterai mulai masuk area kritis, bukan sekadar menunjukkan garis turun.<br><br>"
+        f"<strong>Pembacaan heatmap korelasi:</strong> fitur yang paling kuat hubungannya dengan RUL adalah "
+        f"<strong>{top_corr['Fitur']}</strong> dengan korelasi <strong>{top_corr['Korelasi_dengan_RUL']:.3f}</strong>. "
+        f"Artinya, fitur tersebut cenderung <strong>{corr_direction}</strong>. Korelasi ini tidak otomatis berarti "
+        "sebab-akibat, tetapi menjadi petunjuk penting untuk memilih fitur yang relevan sebelum modelling."
     )
 
 
